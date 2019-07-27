@@ -46,11 +46,11 @@ def play_ones(env,
     print(obs.shape)
     obs_small = image_transformer.transform(obs, sess)
     state = np.stack([obs_small] * n_history, axis = 2)
-    loss = None
+    loss = [None, None]
     
     total_time_training = 0
     num_steps_in_episode = 0
-    episode_reward = 0
+    episode_reward = [0,0]
     
     done = False
     if record == True:
@@ -58,19 +58,22 @@ def play_ones(env,
     while not done:
         
         if total_t % TARGET_UPDATE_PERIOD == 0:
-            target_model.copy_from(model)
+            for ii in range(2):
+                target_model[ii].copy_from(model[ii])
             print("model is been copied!")
-        
-        action = model.sample_action(state, epsilon)
+        action = []
+        for ii in range(2):
+            action.append(model[ii].sample_action(state, epsilon))
         obs, reward, done, _ = env.step(action)
         obs_small = image_transformer.transform(obs, sess)
         next_state = update_state(state, obs_small)
-        
-        episode_reward += reward
-        
-        experience_replay_buffer.add_experience(action, obs_small, reward, done)
         t0_2 = datetime.now()
-        loss = learn(model, target_model, experience_replay_buffer, gamma, batch_size)
+        for ii in range(2):
+            episode_reward[ii] += reward[ii]
+            experience_replay_buffer[ii].add_experience(action[ii], obs_small, reward[ii], done)
+            loss = learn(model[ii], target_model[ii], experience_replay_buffer[ii], gamma, batch_size)
+        
+        
         dt = datetime.now() - t0_2
         
         total_time_training += dt.total_seconds()
@@ -104,8 +107,8 @@ if __name__ == '__main__':
     batch_sz = 32
     num_episodes = 3500
     total_t = 0
-    experience_replay_buffer = ReplayMemory()
-    episode_rewards = np.zeros(num_episodes)
+    experience_replay_buffer = [ReplayMemory(),ReplayMemory()]
+    episode_rewards = np.zeros((2,num_episodes))
     episode_lens = np.zeros(num_episodes)
     
     epsilon = 1.0
@@ -116,28 +119,34 @@ if __name__ == '__main__':
     
     #monitor_dir = 'video'
     #env = wrappers.Monitor(env, monitor_dir)
+    model = []
+    target_model = []
+    for ii in range(2):
+        model.append(DQN(
+                K = K,
+                conv_layer_sizes=conv_layer_sizes,
+                hidden_layer_sizes=hidden_layer_sizes,
+                scope="model",
+                image_size=IM_SIZE
+                ))
+        
+        target_model.append(DQN(
+                K = K,
+                conv_layer_sizes=conv_layer_sizes,
+                hidden_layer_sizes=hidden_layer_sizes,
+                scope="target_model",
+                image_size=IM_SIZE
+                ))
     
-    model = DQN(
-            K = K,
-            conv_layer_sizes=conv_layer_sizes,
-            hidden_layer_sizes=hidden_layer_sizes,
-            scope="model",
-            image_size=IM_SIZE
-            )
-    
-    target_model = DQN(
-            K = K,
-            conv_layer_sizes=conv_layer_sizes,
-            hidden_layer_sizes=hidden_layer_sizes,
-            scope="target_model",
-            image_size=IM_SIZE
-            )
     
     image_transformer = ImageTransformer(IM_SIZE)
     
     with tf.Session() as sess:
-        model.set_session(sess)
-        target_model.set_session(sess)
+        for ii in range(2):
+            model[ii].set_session(sess)
+            target_model[ii].set_session(sess)
+        
+
         #model.load()
         #target_model.load()
         sess.run(tf.global_variables_initializer())
@@ -145,10 +154,11 @@ if __name__ == '__main__':
         obs = env.reset()
         
         for i in range(MIN_EXPERIENCE):
-            action = np.random.choice(K)
+            action = [np.random.choice(K),np.random.choice(K)]
             obs, reward, done, _ = env.step(action)
             obs_small = image_transformer.transform(obs, sess)
-            experience_replay_buffer.add_experience(action, obs_small, reward, done)
+            experience_replay_buffer[0].add_experience(action[0], obs_small, reward[0], done)
+            experience_replay_buffer[1].add_experience(action[1], obs_small, reward[1], done)
             
             if done:
                 obs = env.reset()
@@ -176,15 +186,19 @@ if __name__ == '__main__':
                     epsilon_min,
                     video_path,
                     record)
-            episode_rewards[i] = episode_reward
+            for ii in range(2):
+                episode_rewards[ii,i] = episode_reward[ii]
             episode_lens[i] = num_steps_in_episode
-            last_100_avg = episode_rewards[max(0,i-100):i+1].mean()
+            last_100_avg1 = episode_rewards[0,max(0,i-100):i+1].mean()
+            last_100_avg2 = episode_rewards[1,max(0,i-100):i+1].mean()
             print("Episode:", i ,
                   "Duration:", duration,
                   "Num steps:", num_steps_in_episode,
-                  "Reward:", episode_reward,
+                  "Reward 1:", episode_reward[0],
+                  "Reward 2:", episode_reward[1],
                   "Training time per step:", "%.3f" %time_per_step,
-                  "Avg Reward:", "%.3f"%last_100_avg,
+                  "Avg Reward 1:", "%.3f"%last_100_avg1,
+                  "Avg Reward 2:", "%.3f"%last_100_avg2,
                   "Epsilon:", "%.3f"%epsilon)
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)

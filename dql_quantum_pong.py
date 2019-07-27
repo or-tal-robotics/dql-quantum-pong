@@ -126,7 +126,7 @@ if __name__ == '__main__':
                 K = K,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
-                scope="model",
+                scope="model"+str(ii),
                 image_size=IM_SIZE
                 ))
         
@@ -134,7 +134,7 @@ if __name__ == '__main__':
                 K = K,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
-                scope="target_model",
+                scope="target_model"+str(ii),
                 image_size=IM_SIZE
                 ))
     

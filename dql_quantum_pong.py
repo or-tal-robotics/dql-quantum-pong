@@ -54,7 +54,7 @@ def play_ones(env,
     
     done = False
     if record == True:
-        out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), 10.0, (640,480))
+        out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), 20.0, (640,480))
     while not done:
         
         if total_t % TARGET_UPDATE_PERIOD == 0:
@@ -156,8 +156,8 @@ if __name__ == '__main__':
         t0 = datetime.now()
         record = True
         for i in range(num_episodes):
-            video_path = 'video2/video'+str(i)+'.avi'
-            if i%100 == 0:
+            video_path = 'video/Episode_'+str(i)+'.avi'
+            if i%50 == 0:
                 record = True
             else:
                 record = False

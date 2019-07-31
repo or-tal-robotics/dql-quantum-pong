@@ -217,9 +217,11 @@ if __name__ == '__main__':
         print("Total duration:", datetime.now()-t0)
         model.save()
         
-        y1 = smooth(episode_rewards)
-        plt.plot(episode_rewards, label='orig')
-        plt.plot(y, label='smoothed')
+        y1 = smooth(episode_rewards[0,:i])
+        y2 = smooth(episode_rewards[1,:i])
+        #plt.plot(episode_rewards, label='orig')
+        plt.plot(y1, label='agent 1')
+        plt.plot(y2, label='agent 2')
         plt.legend()
         plt.show()
         

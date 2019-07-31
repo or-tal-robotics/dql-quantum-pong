@@ -20,7 +20,7 @@ class DQN():
             selected_action_value = tf.reduce_sum(self.predict_op * tf.one_hot(self.actions,K), reduction_indices=[1])
             
             cost = tf.reduce_mean(tf.losses.huber_loss(self.G, selected_action_value))
-            self.train_op = tf.train.AdamOptimizer(1e-5).minimize(cost)
+            self.train_op = tf.train.AdamOptimizer(5e-6).minimize(cost)
             self.cost = cost
             
     def copy_from(self, other):

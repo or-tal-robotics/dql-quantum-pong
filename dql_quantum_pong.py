@@ -39,8 +39,7 @@ def play_ones(env,
               epsilon_change,
               epsilon_min,
               pathOut,
-              record,
-              train_idxs):
+              record):
     
     t0 = datetime.now()
     obs = env.reset()
@@ -73,7 +72,7 @@ def play_ones(env,
         
         for ii in range(2):
             episode_reward[ii] += reward[ii]
-        for ii in train_idxs:
+        for ii in range(2):
             experience_replay_buffer[ii].add_experience(action[ii], obs_small, reward[ii], done)
             loss = learn(model[ii], target_model[ii], experience_replay_buffer[ii], gamma, batch_size)
         
@@ -170,17 +169,13 @@ if __name__ == '__main__':
         t0 = datetime.now()
         record = True
         for i in range(num_episodes):
-            video_path = 'video/Episode_'+str(i)+'.avi'
+            video_path = 'video/no_leap/Episode_'+str(i)+'.avi'
             if i%50 == 0:
                 record = True
             else:
                 record = False
                 
-            if i%10 ==0:
-                if train_idxs == [0]:
-                    train_idxs = [1]
-                else:
-                    train_idxs = [0]
+       
                 
             total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon = play_ones(
                     env,
@@ -196,8 +191,7 @@ if __name__ == '__main__':
                     epsilon_change,
                     epsilon_min,
                     video_path,
-                    record,
-                    train_idxs)
+                    record)
             for ii in range(2):
                 episode_rewards[ii,i] = episode_reward[ii]
             episode_lens[i] = num_steps_in_episode

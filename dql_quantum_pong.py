@@ -16,7 +16,7 @@ MAX_EXPERIENCE = 50000
 MIN_EXPERIENCE = 5000
 TARGET_UPDATE_PERIOD = 10000
 IM_SIZE = 84
-K = 3
+K = 6
 n_history = 4
 
     
@@ -215,7 +215,6 @@ if __name__ == '__main__':
                   "Epsilon:", "%.3f"%epsilon)
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
-        model.save()
         
         y1 = smooth(episode_rewards[0,:i])
         y2 = smooth(episode_rewards[1,:i])

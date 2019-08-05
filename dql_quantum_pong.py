@@ -109,7 +109,7 @@ if __name__ == '__main__':
     hidden_layer_sizes = [512]
     gamma = 0.99
     batch_sz = 32
-    num_episodes = 3500
+    num_episodes = 551
     total_t = 0
     experience_replay_buffer = [ReplayMemory(),ReplayMemory()]
     episode_rewards = np.zeros((2,num_episodes))
@@ -170,13 +170,13 @@ if __name__ == '__main__':
         t0 = datetime.now()
         record = True
         for i in range(num_episodes):
-            video_path = 'video/Episode_'+str(i)+'.avi'
+            video_path = 'video/leap_frog/Episode_'+str(i)+'.avi'
             if i%50 == 0:
                 record = True
             else:
                 record = False
                 
-            if i%10 ==0:
+            if i%3 ==0:
                 if train_idxs == [0]:
                     train_idxs = [1]
                 else:
@@ -215,10 +215,11 @@ if __name__ == '__main__':
                   "Epsilon:", "%.3f"%epsilon)
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
-        model.save()
+        for ii in range(2):
+            model[ii].save()
         
-        y1 = smooth(episode_rewards[0,:i])
-        y2 = smooth(episode_rewards[1,:i])
+        y1 = smooth(episode_rewards[0,:500])
+        y2 = smooth(episode_rewards[1,:500])
         #plt.plot(episode_rewards, label='orig')
         plt.plot(y1, label='agent 1')
         plt.plot(y2, label='agent 2')

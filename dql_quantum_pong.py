@@ -52,7 +52,7 @@ def play_ones(env,
     total_time_training = 0
     num_steps_in_episode = 0
     episode_reward = [0,0]
-    
+    quantum_button = [0,0]
     done = False
     if record == True:
         out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), 20.0, (640,480))
@@ -65,7 +65,8 @@ def play_ones(env,
         action = []
         for ii in range(2):
             action.append(model[ii].sample_action(state, epsilon))
-
+            if action[ii] > 2:
+                quantum_button[ii] += 1
         obs, reward, done, _ = env.step(action)
         obs_small = image_transformer.transform(obs, sess)
         next_state = update_state(state, obs_small)
@@ -93,7 +94,10 @@ def play_ones(env,
             #cv2.imshow("frame", frame)
     if record == True:
         out.release()
-    return total_t, episode_reward, (datetime.now()-t0), num_steps_in_episode, total_time_training/num_steps_in_episode, loss
+        
+    quantum_button[0] = quantum_button[0]/num_steps_in_episode
+    quantum_button[1] = quantum_button[1]/num_steps_in_episode
+    return total_t, episode_reward, (datetime.now()-t0), num_steps_in_episode, total_time_training/num_steps_in_episode, epsilon, quantum_button
 
 def smooth(x):
     n = len(x)
@@ -118,6 +122,7 @@ if __name__ == '__main__':
     epsilon = 1.0
     epsilon_min = 0.1
     epsilon_change = (epsilon - epsilon_min) / 500000
+    quantum_buttons = np.zeros((2,num_episodes))
     
     env = gym.make('gym_quantum_pong:Quantum_Pong-v0')
     
@@ -169,6 +174,7 @@ if __name__ == '__main__':
                 
         t0 = datetime.now()
         record = True
+        episode_reward = [0,1]
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
             if i%50 == 0:
@@ -176,13 +182,13 @@ if __name__ == '__main__':
             else:
                 record = False
                 
-            if i%10 ==0:
-                if train_idxs == [0]:
-                    train_idxs = [1]
-                else:
-                    train_idxs = [0]
+            if episode_reward[0] > episode_reward[1]:
+                train_idxs = [1]
+            else:
+                train_idxs = [0]
                 
-            total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon = play_ones(
+                
+            total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button = play_ones(
                     env,
                     sess,
                     total_t,
@@ -200,6 +206,7 @@ if __name__ == '__main__':
                     train_idxs)
             for ii in range(2):
                 episode_rewards[ii,i] = episode_reward[ii]
+                quantum_buttons[ii,i] = quantum_button[ii]
             episode_lens[i] = num_steps_in_episode
             last_100_avg1 = episode_rewards[0,max(0,i-100):i+1].mean()
             last_100_avg2 = episode_rewards[1,max(0,i-100):i+1].mean()
@@ -212,15 +219,26 @@ if __name__ == '__main__':
                   "Training time per step:", "%.3f" %time_per_step,
                   "Avg Reward 1:", "%.3f"%last_100_avg1,
                   "Avg Reward 2:", "%.3f"%last_100_avg2,
-                  "Epsilon:", "%.3f"%epsilon)
+                  "Epsilon:", "%.3f"%epsilon,
+                  "Quantum batton rate:", "%.3f"%quantum_button)
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
         
         y1 = smooth(episode_rewards[0,:i])
         y2 = smooth(episode_rewards[1,:i])
-        #plt.plot(episode_rewards, label='orig')
+        b1 = smooth(quantum_buttons[0,:i])
+        b2 = smooth(quantum_buttons[1,:i])
+        plt.subplot(1,2,1)
         plt.plot(y1, label='agent 1')
         plt.plot(y2, label='agent 2')
+        plt.xlabel("Episodes")
+        plt.ylabel("Reward")
+        plt.legend()
+        plt.subplot(1,2,2)
+        plt.plot(b1, label='agent 1')
+        plt.plot(b2, label='agent 2')
+        plt.xlabel("Episodes")
+        plt.ylabel("Quantum button rate")
         plt.legend()
         plt.show()
         

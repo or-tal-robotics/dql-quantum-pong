@@ -16,6 +16,7 @@ class DQN():
             Z = tf.contrib.layers.flatten(Z)
             for M in hidden_layer_sizes:
                 Z = tf.contrib.layers.fully_connected(Z,M)
+                #Z = tf.contrib.layers.dropout(Z,0.3)
             self.predict_op = tf.contrib.layers.fully_connected(Z,K)
             selected_action_value = tf.reduce_sum(self.predict_op * tf.one_hot(self.actions,K), reduction_indices=[1])
             

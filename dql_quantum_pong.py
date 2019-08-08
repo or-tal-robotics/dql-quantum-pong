@@ -16,7 +16,7 @@ MAX_EXPERIENCE = 50000
 MIN_EXPERIENCE = 5000
 TARGET_UPDATE_PERIOD = 10000
 IM_SIZE = 84
-K = 6
+K = 4
 n_history = 4
 
     
@@ -68,7 +68,7 @@ def play_ones(env,
             action.append(model[ii].sample_action(state, epsilon))
             if action[ii] > 2:
                 quantum_button[ii] += 1
-        if action[0]>2 or action[1]>2:
+        if action[0]>2 and action[1]>2:
             quantum_button_dual += 1
         obs, reward, done, _ = env.step(action)
         obs_small = image_transformer.transform(obs, sess)
@@ -114,7 +114,7 @@ def smooth(x):
 
 if __name__ == '__main__':
     conv_layer_sizes = [(32,8,4), (64,4,2), (64,3,1)]
-    hidden_layer_sizes = [512]
+    hidden_layer_sizes = [512,256]
     gamma = 0.99
     batch_sz = 32
     num_episodes = 3500
@@ -179,14 +179,18 @@ if __name__ == '__main__':
         t0 = datetime.now()
         record = True
         episode_reward = [0,1]
+        skip_intervel = 1
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
             if i%50 == 0:
                 record = True
             else:
                 record = False
+             
+            if i % 30 == 0:
+                skip_intervel += 1
                 
-            if i%3 ==0:
+            if i % skip_intervel == 0:
                 if train_idxs == [0]:
                     train_idxs = [1]
                 else:

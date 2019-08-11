@@ -180,6 +180,7 @@ if __name__ == '__main__':
         record = True
         episode_reward = [0,1]
         skip_intervel = 5
+        lr = 1e-5
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
             if i%50 == 0:
@@ -200,6 +201,12 @@ if __name__ == '__main__':
                 env.mode = 0
             else:
                 env.mode = 0
+                
+            if i % 10 :
+                lr *= 0.9
+                for ii in range(2):
+                    model[ii].change_learning_rate(lr)
+                print("changing learning rate to: "+str(lr))
                 
                 
             total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(

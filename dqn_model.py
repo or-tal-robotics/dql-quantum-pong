@@ -24,6 +24,9 @@ class DQN():
             self.train_op = tf.train.AdamOptimizer(1e-5).minimize(cost)
             self.cost = cost
             
+    def change_learning_rate(self, lr):
+        self.train_op = tf.train.AdamOptimizer(lr).minimize(self.cost)
+            
     def copy_from(self, other):
         mine = [t for t in tf.trainable_variables() if t.name.startswith(self.scope)]
         mine = sorted(mine, key=lambda v: v.name)

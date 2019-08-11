@@ -204,7 +204,7 @@ if __name__ == '__main__':
                 env.mode = 0
                 
             if i % 10 == 0:
-                lr *= 0.97
+                lr *= 0.975
                 print("changing learning rate to: "+str(lr))
                 
                 

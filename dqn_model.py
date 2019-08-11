@@ -6,6 +6,8 @@ class DQN():
         self.K = K
         self.scope = scope
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+            self.learning_rate = tf.placeholder(tf.float32, shape=[])
+
             self.X = tf.placeholder(tf.float32, shape=(None, image_size,image_size, 4), name='X')
             self.G = tf.placeholder(tf.float32, shape=(None,), name='G')
             self.actions = tf.placeholder(tf.int32, shape=(None,), name='actions')
@@ -21,11 +23,8 @@ class DQN():
             selected_action_value = tf.reduce_sum(self.predict_op * tf.one_hot(self.actions,K), reduction_indices=[1])
             
             cost = tf.reduce_mean(tf.losses.huber_loss(self.G, selected_action_value))
-            self.train_op = tf.train.AdamOptimizer(1e-5).minimize(cost)
+            self.train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(cost)
             self.cost = cost
-            
-    def change_learning_rate(self, lr):
-        self.train_op = tf.train.AdamOptimizer(lr).minimize(self.cost)
             
     def copy_from(self, other):
         mine = [t for t in tf.trainable_variables() if t.name.startswith(self.scope)]
@@ -58,10 +57,10 @@ class DQN():
     def predict(self, states):
         return self.session.run(self.predict_op, feed_dict = {self.X: states})
     
-    def update(self, states, actions, targets):
+    def update(self, states, actions, targets, lr):
         c, _ = self.session.run(
                 [self.cost, self.train_op],
-                feed_dict = {self.X: states, self.G: targets, self.actions: actions}
+                feed_dict = {self.X: states, self.G: targets, self.actions: actions, self.learning_rate: lr}
                 )
         return c
     

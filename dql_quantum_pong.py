@@ -28,6 +28,7 @@ n_history = 4
 
 def play_ones(env,
               sess,
+              lr,
               total_t,
               experience_replay_buffer,
               model,
@@ -79,7 +80,7 @@ def play_ones(env,
             episode_reward[ii] += reward[ii]
         for ii in train_idxs:
             experience_replay_buffer[ii].add_experience(action[ii], obs_small, reward[ii], done)
-            loss = learn(model[ii], target_model[ii], experience_replay_buffer[ii], gamma, batch_size)
+            loss = learn(model[ii], target_model[ii], experience_replay_buffer[ii], gamma, batch_size, lr)
         
         
         dt = datetime.now() - t0_2
@@ -202,16 +203,15 @@ if __name__ == '__main__':
             else:
                 env.mode = 0
                 
-            if i % 10 :
-                lr *= 0.9
-                for ii in range(2):
-                    model[ii].change_learning_rate(lr)
+            if i % 10 == 0:
+                lr *= 0.97
                 print("changing learning rate to: "+str(lr))
                 
                 
             total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(
                     env,
                     sess,
+                    lr,
                     total_t,
                     experience_replay_buffer,
                     model,

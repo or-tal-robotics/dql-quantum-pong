@@ -16,12 +16,12 @@ class DQN():
             Z = tf.contrib.layers.flatten(Z)
             for M in hidden_layer_sizes:
                 Z = tf.contrib.layers.fully_connected(Z,M)
-                #Z = tf.contrib.layers.dropout(Z,0.3)
+                Z = tf.contrib.layers.dropout(Z,0.3)
             self.predict_op = tf.contrib.layers.fully_connected(Z,K)
             selected_action_value = tf.reduce_sum(self.predict_op * tf.one_hot(self.actions,K), reduction_indices=[1])
             
             cost = tf.reduce_mean(tf.losses.huber_loss(self.G, selected_action_value))
-            self.train_op = tf.train.AdamOptimizer(5e-6).minimize(cost)
+            self.train_op = tf.train.AdamOptimizer(1e-5).minimize(cost)
             self.cost = cost
             
     def copy_from(self, other):

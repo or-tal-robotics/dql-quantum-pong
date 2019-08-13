@@ -16,7 +16,7 @@ MAX_EXPERIENCE = 50000
 MIN_EXPERIENCE = 5000
 TARGET_UPDATE_PERIOD = 50000
 IM_SIZE = 84
-K = 3
+K = 4
 n_history = 4
 
     
@@ -203,8 +203,8 @@ if __name__ == '__main__':
             else:
                 env.mode = 0
                 
-            if i % 10 == 0:
-                lr *= 0.975
+            if i % 100 == 0:
+                lr *= 0.9
                 print("changing learning rate to: "+str(lr))
                 
                 

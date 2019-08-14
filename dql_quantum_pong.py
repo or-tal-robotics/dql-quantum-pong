@@ -16,8 +16,9 @@ MAX_EXPERIENCE = 50000
 MIN_EXPERIENCE = 5000
 TARGET_UPDATE_PERIOD = 50000
 IM_SIZE = 84
-K = 4
+K = 3
 n_history = 4
+MAX_STEPS_PER_EPSIODE = 2000
 
     
 
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     hidden_layer_sizes = [512]
     gamma = 0.99
     batch_sz = 32
-    num_episodes = 3500
+    num_episodes = 2000
     total_t = 0
     experience_replay_buffer = [ReplayMemory(),ReplayMemory()]
     episode_rewards = np.zeros((2,num_episodes))
@@ -181,7 +182,7 @@ if __name__ == '__main__':
         record = True
         episode_reward = [0,1]
         skip_intervel = 5
-        lr = 1e-5
+        lr = 2e-5
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
             if i%50 == 0:
@@ -203,8 +204,8 @@ if __name__ == '__main__':
             else:
                 env.mode = 0
                 
-            if i % 100 == 0:
-                lr *= 0.9
+            if i % 20 == 0:
+                lr *= 0.95
                 print("changing learning rate to: "+str(lr))
                 
                 
@@ -256,6 +257,8 @@ if __name__ == '__main__':
         plt.subplot(1,3,1)
         plt.plot(y1, label='agent 1')
         plt.plot(y2, label='agent 2')
+        #plt.plot(yb1, label='agent 1 q')
+        #plt.plot(yb2, label='agent 2 q')
         plt.xlabel("Episodes")
         plt.ylabel("Reward")
         plt.legend()
@@ -271,6 +274,10 @@ if __name__ == '__main__':
         plt.ylabel("Quantum button rate")
         plt.legend()
         plt.show()
+        env.close()
+        statistics_data = (y1, y2, b1, b2, qbd)
+        statistics_data = np.array(statistics_data)
+        np.save("stat.npy", statistics_data)
         
     
     

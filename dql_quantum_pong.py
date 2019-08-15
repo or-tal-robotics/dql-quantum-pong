@@ -18,7 +18,7 @@ TARGET_UPDATE_PERIOD = 50000
 IM_SIZE = 84
 K = 3
 n_history = 4
-MAX_STEPS_PER_EPSIODE = 2000
+MAX_STEPS_PER_EPSIODE = 50000
 
     
 
@@ -181,17 +181,17 @@ if __name__ == '__main__':
         t0 = datetime.now()
         record = True
         episode_reward = [0,1]
-        skip_intervel = 5
-        lr = 2e-5
+        skip_intervel = 10
+        lr = 5e-6
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
-            if i%50 == 0:
+            if i%100 == 0:
                 record = True
             else:
                 record = False
              
-            if i % 30 == 0:
-                skip_intervel += 1
+            #if i % 30 == 0:
+             #   skip_intervel += 1
                 
             if i % skip_intervel == 0:
                 if train_idxs == [0]:
@@ -204,10 +204,9 @@ if __name__ == '__main__':
             else:
                 env.mode = 0
                 
-            if i % 20 == 0:
-                lr *= 0.95
+            if (i+1) % 50 == 0 and i > 500:
+                lr *= 0.9
                 print("changing learning rate to: "+str(lr))
-                
                 
             total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(
                     env,

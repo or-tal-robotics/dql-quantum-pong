@@ -119,7 +119,7 @@ if __name__ == '__main__':
     hidden_layer_sizes = [512]
     gamma = 0.99
     batch_sz = 32
-    num_episodes = 2000
+    num_episodes = 1730
     total_t = 0
     experience_replay_buffer = [ReplayMemory(),ReplayMemory()]
     episode_rewards = np.zeros((2,num_episodes))
@@ -248,14 +248,19 @@ if __name__ == '__main__':
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
         
+        statistics_data_no = np.load("statistics/stat_no_quantum.npy")
+        y1_no = statistics_data_no[0]
+        y2_no = statistics_data_no[1]
         y1 = smooth(episode_rewards[0,:i])
         y2 = smooth(episode_rewards[1,:i])
         b1 = smooth(quantum_buttons[0,:i])
         b2 = smooth(quantum_buttons[1,:i])
         qbd = smooth(quantum_button_duals[:i])
         plt.subplot(1,3,1)
-        plt.plot(y1, label='agent 1')
-        plt.plot(y2, label='agent 2')
+        plt.plot(y1, label='agent 1 quantum')
+        plt.plot(y2, label='agent 2 quantum')
+        plt.plot(y1_no, label='agent 1')
+        plt.plot(y2_no, label='agent 2')
         #plt.plot(yb1, label='agent 1 q')
         #plt.plot(yb2, label='agent 2 q')
         plt.xlabel("Episodes")
@@ -277,6 +282,8 @@ if __name__ == '__main__':
         statistics_data = (y1, y2, b1, b2, qbd)
         statistics_data = np.array(statistics_data)
         np.save("stat.npy", statistics_data)
+        
+        
         
     
     

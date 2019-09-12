@@ -128,7 +128,7 @@ if __name__ == '__main__':
     train_idxs = [0,1]
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_change = (epsilon - epsilon_min) / 1000000
+    epsilon_change = (epsilon - epsilon_min) / 700000
     quantum_buttons = np.zeros((2,num_episodes))
     quantum_button_duals = np.zeros(num_episodes)
     env = gym.make('gym_quantum_pong:Quantum_Pong-v0')
@@ -183,7 +183,7 @@ if __name__ == '__main__':
         record = True
         episode_reward = [0,1]
         skip_intervel = 10
-        lr = 1e-5
+        lr = 6e-6
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
             if i%100 == 0:
@@ -209,7 +209,7 @@ if __name__ == '__main__':
                 if lr < 1e-8:
                     lr = 1e-8
                 else:
-                    lr *= 0.9
+                    lr *= 0.95
                 print("changing learning rate to: "+str(lr))
                 
             total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(

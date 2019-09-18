@@ -16,7 +16,7 @@ MAX_EXPERIENCE = 50000
 MIN_EXPERIENCE = 5000
 TARGET_UPDATE_PERIOD = 50000
 IM_SIZE = 84
-K = 4
+K = 3
 n_history = 4
 MAX_STEPS_PER_EPSIODE = 50000
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     train_idxs = [0,1]
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_change = (epsilon - epsilon_min) / 700000
+    epsilon_change = (epsilon - epsilon_min) / 50000
     quantum_buttons = np.zeros((2,num_episodes))
     quantum_button_duals = np.zeros(num_episodes)
     env = gym.make('gym_quantum_pong:Quantum_Pong-v0')
@@ -252,7 +252,7 @@ if __name__ == '__main__':
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
         
-        statistics_data_no = np.load("statistics/stat_no_quantum.npy")
+        statistics_data_no = np.load("statistics/stat_no_quantum_14092019.npy")
         y1_no = statistics_data_no[0]
         y2_no = statistics_data_no[1]
         y1 = smooth(episode_rewards[0,:i])

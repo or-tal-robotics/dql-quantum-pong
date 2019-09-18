@@ -16,7 +16,7 @@ MAX_EXPERIENCE = 50000
 MIN_EXPERIENCE = 5000
 TARGET_UPDATE_PERIOD = 50000
 IM_SIZE = 84
-K = 3
+K = 4
 n_history = 4
 MAX_STEPS_PER_EPSIODE = 50000
 
@@ -70,7 +70,7 @@ def play_ones(env,
             action.append(model[ii].sample_action(state, epsilon))
             if action[ii] > 2:
                 quantum_button[ii] += 1
-        if action[0]>2 or action[1]>2:
+        if (action[0]==3 and action[1]==3) or (action[0]==0 and action[1]==0):
             quantum_button_dual += 1
         obs, reward, done, _ = env.step(action)
         obs_small = image_transformer.transform(obs, sess)

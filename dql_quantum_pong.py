@@ -256,7 +256,8 @@ if __name__ == '__main__':
                   "Quantum batton rate 1:", "%.3f"%quantum_button[0],
                   "Quantum batton rate 2:", "%.3f"%quantum_button[1],
                   "Quantum batton dual:", "%.3f"%quantum_button_dual)
-            print(statistics)
+            print(statistics.c, statistics.q, statistics.qt)
+            print(env.QP.quantum_memory)
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
         

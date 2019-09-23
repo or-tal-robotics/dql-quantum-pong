@@ -20,8 +20,10 @@ K = 4
 n_history = 4
 MAX_STEPS_PER_EPSIODE = 50000
 
-    
-
+class Statistics():
+    q = 0
+    qt = 0
+    c = np.zeros((2,2))
             
 
         
@@ -97,13 +99,18 @@ def play_ones(env,
             frame = cv2.resize(frame,(640,480))
             out.write(frame)
             #cv2.imshow("frame", frame)
+        statistics = Statistics()    
+        c, qs, qst = env.statistics()
+        statistics.c = c
+        statistics.q = qs
+        statistics.qt = qst
     if record == True:
         out.release()
         
     quantum_button[0] = quantum_button[0]/num_steps_in_episode
     quantum_button[1] = quantum_button[1]/num_steps_in_episode
     quantum_button_dual = quantum_button_dual/num_steps_in_episode
-    return total_t, episode_reward, (datetime.now()-t0), num_steps_in_episode, total_time_training/num_steps_in_episode, epsilon, quantum_button, quantum_button_dual
+    return total_t, episode_reward, (datetime.now()-t0), num_steps_in_episode, total_time_training/num_steps_in_episode, epsilon, quantum_button, quantum_button_dual, statistics
 
 def smooth(x):
     n = len(x)
@@ -182,7 +189,7 @@ if __name__ == '__main__':
         t0 = datetime.now()
         record = True
         episode_reward = [0,1]
-        skip_intervel = 10
+        skip_intervel = 5
         lr = 6e-6
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
@@ -212,7 +219,7 @@ if __name__ == '__main__':
                     lr *= 0.95
                 print("changing learning rate to: "+str(lr))
                 
-            total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(
+            total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual, statistics = play_ones(
                     env,
                     sess,
                     lr,
@@ -249,10 +256,11 @@ if __name__ == '__main__':
                   "Quantum batton rate 1:", "%.3f"%quantum_button[0],
                   "Quantum batton rate 2:", "%.3f"%quantum_button[1],
                   "Quantum batton dual:", "%.3f"%quantum_button_dual)
+            print(statistics)
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
         
-        statistics_data_no = np.load("statistics/stat_no_quantum_14092019.npy")
+        statistics_data_no = np.load("statistics/stat_no_quantum_23092019.npy")
         y1_no = statistics_data_no[0]
         y2_no = statistics_data_no[1]
         y1 = smooth(episode_rewards[0,:i])

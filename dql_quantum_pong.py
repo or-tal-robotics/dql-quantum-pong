@@ -271,9 +271,19 @@ if __name__ == '__main__':
         b1 = smooth(quantum_buttons[0,:i])
         b2 = smooth(quantum_buttons[1,:i])
         qbd = smooth(quantum_button_duals[:i])
+        C = np.empty((len(stats),6))    
+        for ii in range(len(stats)):
+            if stats[ii].c is None:
+                C[ii,:] = 0
+            else:
+                C[ii,:4] = stats[ii].c.reshape(-1)
+                C[ii,4] = stats[ii].q
+                C[ii,5] = stats[ii].qt
+                
         statistics_data = (y1, y2, b1, b2, qbd)
         statistics_data = np.array(statistics_data)
         np.save("stat_quantum_choice.npy", statistics_data)
+        np.save("stat_quantum_choice_C.npy", C)
         env.close()
         if plot_flag == True:
             plt.subplot(1,3,1)
@@ -298,6 +308,8 @@ if __name__ == '__main__':
             plt.ylabel("Quantum button rate")
             plt.legend()
             plt.show()
+         
+        
         
        
         

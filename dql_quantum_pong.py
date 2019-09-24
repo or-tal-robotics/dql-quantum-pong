@@ -143,6 +143,7 @@ if __name__ == '__main__':
     #monitor_dir = 'video'
     #env = wrappers.Monitor(env, monitor_dir)
     model = []
+    stats = []
     target_model = []
     for ii in range(2):
         model.append(DQN(
@@ -236,6 +237,7 @@ if __name__ == '__main__':
                     video_path,
                     record,
                     train_idxs)
+            stats.append(statistics)
             for ii in range(2):
                 episode_rewards[ii,i] = episode_reward[ii]
                 quantum_buttons[ii,i] = quantum_button[ii]
@@ -257,7 +259,7 @@ if __name__ == '__main__':
                   "Quantum batton rate 2:", "%.3f"%quantum_button[1],
                   "Quantum batton dual:", "%.3f"%quantum_button_dual)
             print(statistics.c, statistics.q, statistics.qt)
-            print(env.QP.quantum_memory)
+            #print(env.QP.quantum_memory)
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
         

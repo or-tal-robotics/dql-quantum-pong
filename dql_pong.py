@@ -20,10 +20,7 @@ K = 3
 n_history = 4
 MAX_STEPS_PER_EPSIODE = 50000
 
-class Statistics():
-    q = 0
-    qt = 0
-    c = np.zeros((2,2))
+
             
 
         
@@ -236,7 +233,7 @@ if __name__ == '__main__':
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
         
-        np.save("episode_rewards_25092019.npy", episode_rewards)
+        np.save("episode_rewards_26092019.npy", episode_rewards)
         env.close()
         
        

@@ -157,8 +157,6 @@ if __name__ == '__main__':
             target_model[ii].set_session(sess)
         
 
-        #model.load()
-        #target_model.load()
         sess.run(tf.global_variables_initializer())
         print("Initializing experience replay buffer...")
         obs = env.reset()
@@ -185,8 +183,7 @@ if __name__ == '__main__':
             else:
                 record = False
              
-            #if i % 30 == 0:
-             #   skip_intervel += 1
+
                 
             if i % skip_intervel == 0:
                 if train_idxs == [0]:
@@ -194,10 +191,7 @@ if __name__ == '__main__':
                 else:
                     train_idxs = [0]
             
-            if i >= 900:
-                env.mode = 0
-            else:
-                env.mode = 0
+
                 
             if (i+1) % 50 == 0 and i > 800:
                 if lr < 1e-8:

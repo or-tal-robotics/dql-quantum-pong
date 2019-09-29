@@ -194,7 +194,7 @@ if __name__ == '__main__':
                 if lr < 1e-8:
                     lr = 1e-8
                 else:
-                    lr *= 0.95
+                    lr *= 0.9
                 print("changing learning rate to: "+str(lr))
                 
             total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon = play_ones(

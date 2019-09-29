@@ -171,8 +171,7 @@ if __name__ == '__main__':
             target_model[ii].set_session(sess)
         
 
-        #model.load()
-        #target_model.load()
+  
         sess.run(tf.global_variables_initializer())
         print("Initializing experience replay buffer...")
         obs = env.reset()
@@ -198,26 +197,19 @@ if __name__ == '__main__':
                 record = True
             else:
                 record = False
-             
-            #if i % 30 == 0:
-             #   skip_intervel += 1
-                
+
             if i % skip_intervel == 0:
                 if train_idxs == [0]:
                     train_idxs = [1]
                 else:
                     train_idxs = [0]
             
-            if i >= 900:
-                env.mode = 0
-            else:
-                env.mode = 0
                 
             if (i+1) % 50 == 0 and i > 800:
                 if lr < 1e-8:
                     lr = 1e-8
                 else:
-                    lr *= 0.95
+                    lr *= 0.9
                 print("changing learning rate to: "+str(lr))
                 
             total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual, statistics = play_ones(
@@ -237,6 +229,7 @@ if __name__ == '__main__':
                     video_path,
                     record,
                     train_idxs)
+            
             stats.append(statistics)
             for ii in range(2):
                 episode_rewards[ii,i] = episode_reward[ii]
@@ -254,18 +247,12 @@ if __name__ == '__main__':
                   "Training time per step:", "%.3f" %time_per_step,
                   "Avg Reward 1:", "%.3f"%last_100_avg1,
                   "Avg Reward 2:", "%.3f"%last_100_avg2,
-                  "Epsilon:", "%.3f"%epsilon,
-                  "Quantum batton rate 1:", "%.3f"%quantum_button[0],
-                  "Quantum batton rate 2:", "%.3f"%quantum_button[1],
-                  "Quantum batton dual:", "%.3f"%quantum_button_dual)
+                  "Epsilon:", "%.3f"%epsilon)
             print(statistics.c, statistics.q, statistics.qt)
-            #print(env.QP.quantum_memory)
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
         
-        statistics_data_no = np.load("statistics/stat_no_quantum_23092019.npy")
-        y1_no = statistics_data_no[0]
-        y2_no = statistics_data_no[1]
+        
         y1 = smooth(episode_rewards[0,:i])
         y2 = smooth(episode_rewards[1,:i])
         b1 = smooth(quantum_buttons[0,:i])
@@ -282,32 +269,10 @@ if __name__ == '__main__':
                 
         statistics_data = (y1, y2, b1, b2, qbd)
         statistics_data = np.array(statistics_data)
-        np.save("stat_quantum_choice.npy", statistics_data)
-        np.save("stat_quantum_choice_C.npy", C)
+        np.save("stat_quantum_choice_29092019(60).npy", statistics_data)
+        np.save("stat_quantum_choice_C_29092019(60).npy", C)
         env.close()
-        if plot_flag == True:
-            plt.subplot(1,3,1)
-            plt.plot(y1, label='agent 1 quantum')
-            plt.plot(y2, label='agent 2 quantum')
-            plt.plot(y1_no, label='agent 1')
-            plt.plot(y2_no, label='agent 2')
-            #plt.plot(yb1, label='agent 1 q')
-            #plt.plot(yb2, label='agent 2 q')
-            plt.xlabel("Episodes")
-            plt.ylabel("Reward")
-            plt.legend()
-            plt.subplot(1,3,2)
-            plt.plot(b1, label='agent 1')
-            plt.plot(b2, label='agent 2')
-            plt.xlabel("Episodes")
-            plt.ylabel("Quantum button rate")
-            plt.legend()
-            plt.subplot(1,3,3)
-            plt.plot(qbd, label='agent 1*2')
-            plt.xlabel("Episodes")
-            plt.ylabel("Quantum button rate")
-            plt.legend()
-            plt.show()
+        
          
         
         

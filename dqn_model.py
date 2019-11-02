@@ -1,69 +1,57 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import tensorflow as tf
+
+from tensorflow.keras.layers import Dense, Flatten, Conv2D, Input, BatchNormalization, MaxPooling2D
+from tensorflow.keras import Model
+from tensorflow.keras.losses import Huber
 import numpy as np
 
 class DQN():
     def __init__(self, K, conv_layer_sizes, hidden_layer_sizes, scope, image_size):
         self.K = K
-        self.scope = scope
-        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
-            self.learning_rate = tf.placeholder(tf.float32, shape=[])
-
-            self.X = tf.placeholder(tf.float32, shape=(None, image_size,image_size, 4), name='X')
-            self.G = tf.placeholder(tf.float32, shape=(None,), name='G')
-            self.actions = tf.placeholder(tf.int32, shape=(None,), name='actions')
-            Z = self.X / 255.0
-            for num_output_filters, filtersz, poolsz in conv_layer_sizes:
-                Z = tf.contrib.layers.conv2d(Z, num_output_filters, filtersz, poolsz, activation_fn=tf.nn.relu)
-            
-            Z = tf.contrib.layers.flatten(Z)
-            for M in hidden_layer_sizes:
-                Z = tf.contrib.layers.fully_connected(Z,M)
-                #Z = tf.contrib.layers.dropout(Z,0.3)
-            self.predict_op = tf.contrib.layers.fully_connected(Z,K)
-            selected_action_value = tf.reduce_sum(self.predict_op * tf.one_hot(self.actions,K), reduction_indices=[1])
-            
-            cost = tf.reduce_mean(tf.losses.huber_loss(self.G, selected_action_value))
-            self.train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(cost)
-            self.cost = cost
+        self.X = Input(shape=[image_size,image_size,4])
+        Z = self.X / 255.0
+        Z = BatchNormalization()(Z)
+        Z = Conv2D(32, 8,input_shape=(image_size, image_size, 4), activation='relu')(Z)
+        Z = MaxPooling2D(pool_size=(4, 4))
+        Z = BatchNormalization()(Z)
+        Z = Conv2D(64, 4, activation='relu')(Z)
+        Z = MaxPooling2D(pool_size=(2, 2))
+        Z = BatchNormalization()(Z)
+        Z = Conv2D(64, 3, activation='relu')(Z)
+        Z = Flatten()(Z)
+        Z = Dense(512, activation='relu')(Z)
+        self.predict_op = Dense(self.K)(Z)
+        
+        self.model = Model(inputs=self.X, outputs=self.predict_op)
+        self.loss_object  = Huber(from_logits = True)
+        
+        
+        
+        self.train_op = tf.train.AdamOptimizer(1e-5)
             
     def copy_from(self, other):
-        mine = [t for t in tf.trainable_variables() if t.name.startswith(self.scope)]
-        mine = sorted(mine, key=lambda v: v.name)
-        theirs = [t for t in tf.trainable_variables() if t.name.startswith(other.scope)]
-        theirs = sorted(theirs, key=lambda v: v.name)
-        
-        ops = []
-        for p,q in zip(mine, theirs):
-            op = p.assign(q)
-            ops.append(op)
-        self.session.run(ops)
+        self.model.set_weights(other.get_weights()) 
     
     def save(self):
-        params = [t for t in tf.trainable_variables() if t.name.startswith(self.scope)]
-        params = self.session.run(params)
-        np.savez('tf_dqn_weights.npz', *params)
+        self.model.save_weights('model_weights.h5')
     
     def load(self):
-        params = [t for t in tf.trainable_variables() if t.name.startswith(self.scope)]
-        npz = np.load('tf_dqn_weights.npz')
-        ops = []
-        for p, (_, v) in zip(params, npz.iteritems()):
-            ops.append(p.assign(v))
-        self.session.run(ops)
+        self.model.load_weights('model_weights.h5')
         
-    def set_session(self,session):
-        self.session = session
-    
     def predict(self, states):
-        return self.session.run(self.predict_op, feed_dict = {self.X: states})
+        return self.model.predict(states)
     
-    def update(self, states, actions, targets, lr):
-        c, _ = self.session.run(
-                [self.cost, self.train_op],
-                feed_dict = {self.X: states, self.G: targets, self.actions: actions, self.learning_rate: lr}
-                )
-        return c
-    
+    @tf.function
+    def train_step(self,states, actions, targets, inputs, labels):
+        with tf.GradientTape() as tape:
+            predictions = self.model(states, training=True)
+            selected_action_value = tf.reduce_sum(predictions * tf.one_hot(actions,self.K), reduction_indices=[1])
+            cost = tf.reduce_mean(self.loss_object(targets, selected_action_value))
+        gradients = tape.gradient(cost, self.model.trainable_variables)
+        self.train_op.apply_gradients(zip(gradients, self.model.trainable_variables))
+      
     def sample_action(self,x,eps):
         if np.random.random() < eps:
             return np.random.choice(self.K)

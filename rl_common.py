@@ -68,13 +68,12 @@ class ReplayMemory():
 def update_state(state, obs_small):
     return np.append(state[:,:,1:], np.expand_dims(obs_small, 2), axis = 2)
 
-def learn(model, target_model, experience_replay_buffer, gamma, batch_size, lr):
+def learn(model, target_model, experience_replay_buffer, gamma, batch_size):
     states, actions, rewards, next_states, dones = experience_replay_buffer.get_minibatch()
     next_Qs = target_model.predict(next_states)
     next_Q = np.amax(next_Qs, axis=1)
     targets = rewards + np.invert(dones).astype(np.float32) * gamma * next_Q
-     
-    loss = model.update(states, actions, targets, lr)
+    loss = model.train_step(states.astype(np.float32), actions, targets)
     return loss
 
 

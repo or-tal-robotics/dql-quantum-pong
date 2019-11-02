@@ -3,7 +3,8 @@ import cv2
     
 
 def transform(state, size):
-    output = tf.image.resize(test_img, size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR )
+    output = tf.image.resize(state, size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR )
+    output = tf.squeeze(output)
     return output.numpy()
 
 if __name__ == "__main__":

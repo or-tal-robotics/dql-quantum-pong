@@ -16,7 +16,7 @@ MAX_EXPERIENCE = 50000
 MIN_EXPERIENCE = 5000
 TARGET_UPDATE_PERIOD = 50000
 IM_SIZE = 84
-K = 4
+K = 5
 n_history = 4
 MAX_STEPS_PER_EPSIODE = 50000
 
@@ -134,10 +134,9 @@ if __name__ == '__main__':
     epsilon_change = (epsilon - epsilon_min) / 50000
     quantum_buttons = np.zeros((2,num_episodes))
     quantum_button_duals = np.zeros(num_episodes)
-    env = gym.make('gym_quantum_pong:Quantum_Pong-v0')
+    env = gym.make('gym_quantum_pong:Quantum_Pong-v0', mode = "quantum")
     
-    #monitor_dir = 'video'
-    #env = wrappers.Monitor(env, monitor_dir)
+
     model = []
     stats = []
     target_model = []

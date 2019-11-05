@@ -99,18 +99,14 @@ def play_ones(env,
             frame = cv2.resize(frame,(640,480))
             out.write(frame)
             #cv2.imshow("frame", frame)
-        statistics = Statistics()    
-        c, qs, qst = env.statistics()
-        statistics.c = c
-        statistics.q = qs
-        statistics.qt = qst
+ 
     if record == True:
         out.release()
         
     quantum_button[0] = quantum_button[0]/num_steps_in_episode
     quantum_button[1] = quantum_button[1]/num_steps_in_episode
     quantum_button_dual = quantum_button_dual/num_steps_in_episode
-    return total_t, episode_reward, (datetime.now()-t0), num_steps_in_episode, total_time_training/num_steps_in_episode, epsilon, quantum_button, quantum_button_dual, statistics
+    return total_t, episode_reward, (datetime.now()-t0), num_steps_in_episode, total_time_training/num_steps_in_episode, epsilon, quantum_button, quantum_button_dual
 
 def smooth(x):
     n = len(x)
@@ -212,7 +208,7 @@ if __name__ == '__main__':
                     lr *= 0.9
                 print("changing learning rate to: "+str(lr))
                 
-            total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual, statistics = play_ones(
+            total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(
                     env,
                     sess,
                     lr,
@@ -230,12 +226,10 @@ if __name__ == '__main__':
                     record,
                     train_idxs)
             
-            stats.append(statistics)
             for ii in range(2):
                 episode_rewards[ii,i] = episode_reward[ii]
                 quantum_buttons[ii,i] = quantum_button[ii]
             episode_lens[i] = num_steps_in_episode
-            quantum_button_duals[i] = quantum_button_dual
             last_100_avg1 = episode_rewards[0,max(0,i-100):i+1].mean()
             last_100_avg2 = episode_rewards[1,max(0,i-100):i+1].mean()
             print("Episode:", i ,
@@ -248,29 +242,13 @@ if __name__ == '__main__':
                   "Avg Reward 1:", "%.3f"%last_100_avg1,
                   "Avg Reward 2:", "%.3f"%last_100_avg2,
                   "Epsilon:", "%.3f"%epsilon)
-            print(statistics.c, statistics.q, statistics.qt)
             sys.stdout.flush()
         print("Total duration:", datetime.now()-t0)
         
         
         y1 = smooth(episode_rewards[0,:i])
         y2 = smooth(episode_rewards[1,:i])
-        b1 = smooth(quantum_buttons[0,:i])
-        b2 = smooth(quantum_buttons[1,:i])
-        qbd = smooth(quantum_button_duals[:i])
-        C = np.empty((len(stats),6))    
-        for ii in range(len(stats)):
-            if stats[ii].c is None:
-                C[ii,:] = 0
-            else:
-                C[ii,:4] = stats[ii].c.reshape(-1)
-                C[ii,4] = stats[ii].q
-                C[ii,5] = stats[ii].qt
-                
-        statistics_data = (y1, y2, b1, b2, qbd)
-        statistics_data = np.array(statistics_data)
-        np.save("stat_quantum_choice_29092019(60).npy", statistics_data)
-        np.save("stat_quantum_choice_C_29092019(60).npy", C)
+
         env.close()
         
          

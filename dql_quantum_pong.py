@@ -131,10 +131,10 @@ if __name__ == '__main__':
     train_idxs = [0,1]
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_change = (epsilon - epsilon_min) / 50000
+    epsilon_change = (epsilon - epsilon_min) / 300000
     quantum_buttons = np.zeros((2,num_episodes))
     quantum_button_duals = np.zeros(num_episodes)
-    env = gym.make('gym_quantum_pong:Quantum_Pong-v0', mode = "quantum")
+    env = gym.make('gym_quantum_pong:Quantum_Pong-v0', mode = "classic")
     
 
     model = []
@@ -184,8 +184,8 @@ if __name__ == '__main__':
         t0 = datetime.now()
         record = True
         episode_reward = [0,1]
-        skip_intervel = 5
-        lr = 6e-6
+        skip_intervel = 3
+        lr = 1e-5
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
             if i%100 == 0:
@@ -200,7 +200,7 @@ if __name__ == '__main__':
                     train_idxs = [0]
             
                 
-            if (i+1) % 50 == 0 and i > 800:
+            if (i+1) % 50 == 0 and i > 1000:
                 if lr < 1e-8:
                     lr = 1e-8
                 else:
@@ -247,7 +247,8 @@ if __name__ == '__main__':
         
         y1 = smooth(episode_rewards[0,:i])
         y2 = smooth(episode_rewards[1,:i])
-
+        plt.plot(y1)
+        plt.plot(y2)
         env.close()
         
          

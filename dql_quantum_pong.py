@@ -48,10 +48,10 @@ def play_ones(env,
     
     t0 = datetime.now()
     obs = env.reset()
-    print(obs.shape)
-    obs_small = image_transformer.transform(obs, sess)
-    state = np.stack([obs_small] * n_history, axis = 2)
-    loss = [None, None]
+    obs_small_right = image_transformer.transform(obs[0], sess)
+    obs_small_left = image_transformer.transform(obs[1], sess)
+    state_right = np.stack([obs_small_right] * n_history, axis = 2)
+    state_left = np.stack([obs_small_left] * n_history, axis = 2)
     
     total_time_training = 0
     num_steps_in_episode = 0
@@ -67,23 +67,22 @@ def play_ones(env,
             for ii in range(2):
                 target_model[ii].copy_from(model[ii])
             print("model is been copied!")
-        action = []
-        for ii in range(2):
-            action.append(model[ii].sample_action(state, epsilon))
-            if action[ii] > 2:
-                quantum_button[ii] += 1
-        if (action[0]==3 and action[1]==3) or (action[0]==0 and action[1]==0):
-            quantum_button_dual += 1
-        obs, reward, done, _ = env.step(action)
-        obs_small = image_transformer.transform(obs, sess)
-        next_state = update_state(state, obs_small)
+        action_left = model[1].sample_action(state_left, epsilon)
+        action_right = model[0].sample_action(state_right, epsilon)
+
+        obs, reward, done, _ = env.step([action_right,action_left])
+        obs_small_right = image_transformer.transform(obs[0], sess)
+        obs_small_left = image_transformer.transform(obs[1], sess)
+        next_state_left = update_state(state_left, obs_small_left)
+        next_state_right = update_state(state_right, obs_small_right)
         t0_2 = datetime.now()
         
         for ii in range(2):
             episode_reward[ii] += reward[ii]
-        for ii in train_idxs:
-            experience_replay_buffer[ii].add_experience(action[ii], obs_small, reward[ii], done)
-            loss = learn(model[ii], target_model[ii], experience_replay_buffer[ii], gamma, batch_size, lr)
+        experience_replay_buffer[0].add_experience(action_right, obs_small_right, reward[0], done)
+        experience_replay_buffer[1].add_experience(action_left, obs_small_left, reward[1], done)
+        for ii in range(2):
+            learn(model[ii], target_model[ii], experience_replay_buffer[ii], gamma, batch_size, lr)
         
         
         dt = datetime.now() - t0_2
@@ -91,11 +90,12 @@ def play_ones(env,
         total_time_training += dt.total_seconds()
         num_steps_in_episode += 1
         
-        state = next_state
+        state_left = next_state_left
+        state_right = next_state_right
         total_t += 1
         epsilon = max(epsilon - epsilon_change, epsilon_min)
         if record == True:
-            frame = cv2.cvtColor(obs_small, cv2.COLOR_GRAY2BGR)
+            frame = cv2.cvtColor(obs_small_left, cv2.COLOR_GRAY2BGR)
             frame = cv2.resize(frame,(640,480))
             out.write(frame)
             #cv2.imshow("frame", frame)
@@ -137,33 +137,48 @@ if __name__ == '__main__':
     env = gym.make('gym_quantum_pong:Quantum_Pong-v0', mode = "quantum")
     
 
-    model = []
-    stats = []
-    target_model = []
-    for ii in range(2):
-        model.append(DQN(
-                K = K,
+    left_player_model = DQN(
+                K = 3,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
-                scope="model"+str(ii),
+                scope="left_player_model",
                 image_size=IM_SIZE
-                ))
-        
-        target_model.append(DQN(
-                K = K,
+                )
+    
+    left_player_model_target = DQN(
+                K = 3,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
-                scope="target_model"+str(ii),
+                scope="left_player_model_target",
                 image_size=IM_SIZE
-                ))
+                )
+    
+    right_player_model = DQN(
+                K = 5,
+                conv_layer_sizes=conv_layer_sizes,
+                hidden_layer_sizes=hidden_layer_sizes,
+                scope="right_player_model",
+                image_size=IM_SIZE
+                )
+    
+    right_player_model_target = DQN(
+                K = 5,
+                conv_layer_sizes=conv_layer_sizes,
+                hidden_layer_sizes=hidden_layer_sizes,
+                scope="right_player_model_target",
+                image_size=IM_SIZE
+                )
+    
     
     
     image_transformer = ImageTransformer(IM_SIZE)
     
     with tf.Session() as sess:
-        for ii in range(2):
-            model[ii].set_session(sess)
-            target_model[ii].set_session(sess)
+        
+        left_player_model.set_session(sess)
+        left_player_model_target.set_session(sess)
+        right_player_model.set_session(sess)
+        right_player_model_target.set_session(sess)
         
 
   
@@ -174,9 +189,10 @@ if __name__ == '__main__':
         for i in range(MIN_EXPERIENCE):
             action = [np.random.choice(K),np.random.choice(K)]
             obs, reward, done, _ = env.step(action)
-            obs_small = image_transformer.transform(obs, sess)
-            experience_replay_buffer[0].add_experience(action[0], obs_small, reward[0], done)
-            experience_replay_buffer[1].add_experience(action[1], obs_small, reward[1], done)
+            obs_small_right = image_transformer.transform(obs[0], sess)
+            obs_small_left = image_transformer.transform(obs[1], sess)
+            experience_replay_buffer[0].add_experience(action[0], obs_small_right, reward[0], done)
+            experience_replay_buffer[1].add_experience(action[1], obs_small_left, reward[1], done)
             
             if done:
                 obs = env.reset()
@@ -213,8 +229,8 @@ if __name__ == '__main__':
                     lr,
                     total_t,
                     experience_replay_buffer,
-                    model,
-                    target_model,
+                    [right_player_model, left_player_model],
+                    [right_player_model_target, left_player_model_target],
                     image_transformer,
                     gamma,
                     batch_sz,

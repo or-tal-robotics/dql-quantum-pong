@@ -97,6 +97,18 @@ def play_ones(env,
         if record == True:
             frame = cv2.cvtColor(obs_small_left, cv2.COLOR_GRAY2BGR)
             frame = cv2.resize(frame,(640,480))
+            org = (50, 20) 
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            # fontScale 
+            fontScale = 1
+               
+            # Blue color in BGR 
+            color = (255, 0, 0) 
+              
+            # Line thickness of 2 px 
+            thickness = 2
+            frame = cv2.putText(frame, str(episode_reward[0]), org, font,  
+                   fontScale, color, thickness, cv2.LINE_AA)
             out.write(frame)
             #cv2.imshow("frame", frame)
  
@@ -138,7 +150,7 @@ if __name__ == '__main__':
     
 
     left_player_model = DQN(
-                K = 3,
+                K = 5,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
                 scope="left_player_model",
@@ -146,7 +158,7 @@ if __name__ == '__main__':
                 )
     
     left_player_model_target = DQN(
-                K = 3,
+                K = 5,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
                 scope="left_player_model_target",
@@ -154,7 +166,7 @@ if __name__ == '__main__':
                 )
     
     right_player_model = DQN(
-                K = 5,
+                K = 3,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
                 scope="right_player_model",
@@ -162,7 +174,7 @@ if __name__ == '__main__':
                 )
     
     right_player_model_target = DQN(
-                K = 5,
+                K = 3,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
                 scope="right_player_model_target",

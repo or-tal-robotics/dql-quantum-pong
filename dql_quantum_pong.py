@@ -275,6 +275,8 @@ if __name__ == '__main__':
         
         y1 = smooth(episode_rewards[0,:i])
         y2 = smooth(episode_rewards[1,:i])
+        plt.plot(y1)
+        plt.plot(y2)
 
         env.close()
         

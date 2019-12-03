@@ -78,7 +78,8 @@ def play_ones(env,
         t0_2 = datetime.now()
         
         for ii in range(2):
-            episode_reward[ii] += reward[ii]
+            if reward[ii]>0:
+                episode_reward[ii] += reward[ii]
         experience_replay_buffer[0].add_experience(action_right, obs_small_right, reward[0], done)
         experience_replay_buffer[1].add_experience(action_left, obs_small_left, reward[1], done)
         for ii in range(2):
@@ -135,7 +136,7 @@ if __name__ == '__main__':
     hidden_layer_sizes = [512]
     gamma = 0.99
     batch_sz = 32
-    num_episodes = 3000
+    num_episodes = 1000
     total_t = 0
     experience_replay_buffer = [ReplayMemory(),ReplayMemory()]
     episode_rewards = np.zeros((2,num_episodes))
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     train_idxs = [0,1]
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_change = (epsilon - epsilon_min) / 50000
+    epsilon_change = (epsilon - epsilon_min) / 100000
     quantum_buttons = np.zeros((2,num_episodes))
     quantum_button_duals = np.zeros(num_episodes)
     env = gym.make('gym_quantum_pong:Quantum_Pong-v0', mode = "quantum")
@@ -213,7 +214,7 @@ if __name__ == '__main__':
         record = True
         episode_reward = [0,1]
         skip_intervel = 5
-        lr = 6e-6
+        lr = 1e-5
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
             if i%100 == 0:
@@ -254,8 +255,8 @@ if __name__ == '__main__':
                     train_idxs)
             
             for ii in range(2):
-                episode_rewards[ii,i] = episode_reward[ii]
-                quantum_buttons[ii,i] = quantum_button[ii]
+                episode_rewards[ii,i] = episode_reward[ii]/30.0
+            
             episode_lens[i] = num_steps_in_episode
             last_100_avg1 = episode_rewards[0,max(0,i-100):i+1].mean()
             last_100_avg2 = episode_rewards[1,max(0,i-100):i+1].mean()
@@ -274,6 +275,7 @@ if __name__ == '__main__':
         
         
         y1 = smooth(episode_rewards[0,:i])
+        
         y2 = smooth(episode_rewards[1,:i])
         plt.plot(y1)
         plt.plot(y2)

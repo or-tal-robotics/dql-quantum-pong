@@ -43,8 +43,7 @@ def play_ones(env,
               epsilon_change,
               epsilon_min,
               pathOut,
-              record,
-              train_idxs):
+              record):
     
     t0 = datetime.now()
     obs = env.reset()
@@ -69,6 +68,12 @@ def play_ones(env,
             print("model is been copied!")
         action_left = model[1].sample_action(state_left, epsilon)
         action_right = model[0].sample_action(state_right, epsilon)
+#        if total_t % 2 == 0:
+#            action_left = model[1].sample_action(state_left, 0.0)
+#            action_right = model[0].sample_action(state_right, epsilon)
+#        if (total_t + 1) % 2 == 0:
+#            action_left = model[1].sample_action(state_left, epsilon)
+#            action_right = model[0].sample_action(state_right, 0.0)
 
         obs, reward, done, _ = env.step([action_right,action_left])
         obs_small_right = image_transformer.transform(obs[0], sess)
@@ -80,11 +85,17 @@ def play_ones(env,
         for ii in range(2):
             if reward[ii]>0:
                 episode_reward[ii] += reward[ii]
+#        if total_t % 2 == 0:
+#            experience_replay_buffer[0].add_experience(action_right, obs_small_right, reward[0], done)
+#            learn(model[0], target_model[0], experience_replay_buffer[0], gamma, batch_size, lr)
+#            
+#        if (total_t + 1) % 2 == 0:
+#            experience_replay_buffer[1].add_experience(action_left, obs_small_right, reward[1], done)
+#            learn(model[1], target_model[1], experience_replay_buffer[1], gamma, batch_size, lr)
         experience_replay_buffer[0].add_experience(action_right, obs_small_right, reward[0], done)
-        experience_replay_buffer[1].add_experience(action_left, obs_small_left, reward[1], done)
-        for ii in range(2):
-            learn(model[ii], target_model[ii], experience_replay_buffer[ii], gamma, batch_size, lr)
-        
+        learn(model[0], target_model[0], experience_replay_buffer[0], gamma, batch_size, lr)  
+        experience_replay_buffer[1].add_experience(action_left, obs_small_right, reward[1], done)
+        learn(model[1], target_model[1], experience_replay_buffer[1], gamma, batch_size, lr)
         
         dt = datetime.now() - t0_2
         
@@ -136,7 +147,7 @@ if __name__ == '__main__':
     hidden_layer_sizes = [512]
     gamma = 0.99
     batch_sz = 32
-    num_episodes = 1000
+    num_episodes = 3000
     total_t = 0
     experience_replay_buffer = [ReplayMemory(),ReplayMemory()]
     episode_rewards = np.zeros((2,num_episodes))
@@ -144,7 +155,7 @@ if __name__ == '__main__':
     train_idxs = [0,1]
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_change = (epsilon - epsilon_min) / 100000
+    epsilon_change = (epsilon - epsilon_min) / 200000
     quantum_buttons = np.zeros((2,num_episodes))
     quantum_button_duals = np.zeros(num_episodes)
     env = gym.make('gym_quantum_pong:Quantum_Pong-v0', mode = "quantum")
@@ -222,18 +233,14 @@ if __name__ == '__main__':
             else:
                 record = False
 
-            if i % skip_intervel == 0:
-                if train_idxs == [0]:
-                    train_idxs = [1]
-                else:
-                    train_idxs = [0]
+            
             
                 
-            if (i+1) % 50 == 0 and i > 800:
-                if lr < 1e-8:
-                    lr = 1e-8
+            if (i+1) % 50 == 0 and i > 200:
+                if lr < 5e-8:
+                    lr = 5e-8
                 else:
-                    lr *= 0.9
+                    lr *= 0.93
                 print("changing learning rate to: "+str(lr))
                 
             total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(
@@ -251,8 +258,7 @@ if __name__ == '__main__':
                     epsilon_change,
                     epsilon_min,
                     video_path,
-                    record,
-                    train_idxs)
+                    record)
             
             for ii in range(2):
                 episode_rewards[ii,i] = episode_reward[ii]/30.0

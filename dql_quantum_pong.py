@@ -236,7 +236,7 @@ if __name__ == '__main__':
             
             
                 
-            if (i+1) % 50 == 0 and i > 200:
+            if (i+1) % 50 == 0 and i > 10:
                 if lr < 5e-8:
                     lr = 5e-8
                 else:
@@ -261,7 +261,7 @@ if __name__ == '__main__':
                     record)
             
             for ii in range(2):
-                episode_rewards[ii,i] = episode_reward[ii]/30.0
+                episode_rewards[ii,i] = episode_reward[ii]/200.0
             
             episode_lens[i] = num_steps_in_episode
             last_100_avg1 = episode_rewards[0,max(0,i-100):i+1].mean()

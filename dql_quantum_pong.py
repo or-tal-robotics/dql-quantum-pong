@@ -236,7 +236,7 @@ if __name__ == '__main__':
             
             
                 
-            if (i+1) % 50 == 0 and i > 200:
+            if (i+1) % 50 == 0 and i > 10:
                 if lr < 5e-8:
                     lr = 5e-8
                 else:

@@ -47,8 +47,8 @@ def play_ones(env,
     
     t0 = datetime.now()
     obs = env.reset()
-    obs_small_right = image_transformer.transform(obs[0], sess)
-    obs_small_left = image_transformer.transform(obs[1], sess)
+    obs_small_right = image_transformer.transform(obs, sess)
+    obs_small_left = image_transformer.transform(obs, sess)
     state_right = np.stack([obs_small_right] * n_history, axis = 2)
     state_left = np.stack([obs_small_left] * n_history, axis = 2)
     
@@ -76,8 +76,8 @@ def play_ones(env,
 #            action_right = model[0].sample_action(state_right, 0.0)
 
         obs, reward, done, _ = env.step([action_right,action_left])
-        obs_small_right = image_transformer.transform(obs[0], sess)
-        obs_small_left = image_transformer.transform(obs[1], sess)
+        obs_small_right = image_transformer.transform(obs, sess)
+        obs_small_left = image_transformer.transform(obs, sess)
         next_state_left = update_state(state_left, obs_small_left)
         next_state_right = update_state(state_right, obs_small_right)
         t0_2 = datetime.now()
@@ -178,7 +178,7 @@ if __name__ == '__main__':
                 )
     
     right_player_model = DQN(
-                K = 3,
+                K = 5,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
                 scope="right_player_model",
@@ -186,7 +186,7 @@ if __name__ == '__main__':
                 )
     
     right_player_model_target = DQN(
-                K = 3,
+                K = 5,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
                 scope="right_player_model_target",
@@ -213,8 +213,8 @@ if __name__ == '__main__':
         for i in range(MIN_EXPERIENCE):
             action = [np.random.choice(K),np.random.choice(K)]
             obs, reward, done, _ = env.step(action)
-            obs_small_right = image_transformer.transform(obs[0], sess)
-            obs_small_left = image_transformer.transform(obs[1], sess)
+            obs_small_right = image_transformer.transform(obs, sess)
+            obs_small_left = image_transformer.transform(obs, sess)
             experience_replay_buffer[0].add_experience(action[0], obs_small_right, reward[0], done)
             experience_replay_buffer[1].add_experience(action[1], obs_small_left, reward[1], done)
             

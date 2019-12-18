@@ -225,7 +225,7 @@ if __name__ == '__main__':
         record = True
         episode_reward = [0,1]
         skip_intervel = 5
-        lr = 1e-5
+        lr = 1e-6
         for i in range(num_episodes):
             video_path = 'video/Episode_'+str(i)+'.avi'
             if i%100 == 0:
@@ -261,7 +261,7 @@ if __name__ == '__main__':
                     record)
             
             for ii in range(2):
-                episode_rewards[ii,i] = episode_reward[ii]/30.0
+                episode_rewards[ii,i] = episode_reward[ii]/200.0
             
             episode_lens[i] = num_steps_in_episode
             last_100_avg1 = episode_rewards[0,max(0,i-100):i+1].mean()

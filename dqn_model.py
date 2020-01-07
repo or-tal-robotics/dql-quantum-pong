@@ -38,6 +38,13 @@ class DQN():
             ops.append(op)
         self.session.run(ops)
     
+    def get_weights(self):
+        weights = [t for t in tf.trainable_variables() if t.name.startswith(self.scope)]
+        weights = sorted(weights, key=lambda v: v.name)
+        print(self.session.run(weights[17]).shape)
+        w = np.array(self.session.run(weights[17])).reshape((-1))
+        return w
+    
     def save(self):
         params = [t for t in tf.trainable_variables() if t.name.startswith(self.scope)]
         params = self.session.run(params)

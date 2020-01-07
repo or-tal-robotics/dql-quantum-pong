@@ -10,7 +10,7 @@ from dqn_model import DQN
 from gym import wrappers
 import cv2
 import time
-
+import pandas as pd
 
 MAX_EXPERIENCE = 50000
 MIN_EXPERIENCE = 5000
@@ -25,9 +25,11 @@ class Statistics():
     qt = 0
     c = np.zeros((2,2))
             
-
-        
-
+def save_weights_stat(W_left, W_right):         
+    df = pd.DataFrame([W_left])
+    df.to_csv("weights_stats_left.csv",sep="\t", mode='a', header=False)
+    df = pd.DataFrame([W_right])
+    df.to_csv("weights_stats_right.csv",sep="\t", mode='a', header=False)
 
 def play_ones(env,
               sess,
@@ -57,6 +59,9 @@ def play_ones(env,
     episode_reward = [0,0]
     quantum_button = [0,0]
     quantum_button_dual = 0
+    W_left = []
+    W_right = []        
+
     done = False
     if record == True:
         out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), 20.0, (640,480))
@@ -68,6 +73,7 @@ def play_ones(env,
             print("model is been copied!")
         action_left = model[1].sample_action(state_left, epsilon)
         action_right = model[0].sample_action(state_right, epsilon)
+        
 #        if total_t % 2 == 0:
 #            action_left = model[1].sample_action(state_left, 0.0)
 #            action_right = model[0].sample_action(state_right, epsilon)
@@ -75,7 +81,10 @@ def play_ones(env,
 #            action_left = model[1].sample_action(state_left, epsilon)
 #            action_right = model[0].sample_action(state_right, 0.0)
 
-        obs, reward, done, _ = env.step([action_right,action_left])
+        obs, reward, done, hit = env.step([action_right,action_left])
+        print(model[1].get_weights())
+        if hit != 0:
+            save_weights_stat(model[1].get_weights(), model[0].get_weights())
         obs_small_right = image_transformer.transform(obs, sess)
         obs_small_left = image_transformer.transform(obs, sess)
         next_state_left = update_state(state_left, obs_small_left)
@@ -123,7 +132,7 @@ def play_ones(env,
                    fontScale, color, thickness, cv2.LINE_AA)
             out.write(frame)
             #cv2.imshow("frame", frame)
- 
+    
     if record == True:
         out.release()
         
@@ -178,7 +187,7 @@ if __name__ == '__main__':
                 )
     
     right_player_model = DQN(
-                K = 5,
+                K = 7,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
                 scope="right_player_model",
@@ -186,7 +195,7 @@ if __name__ == '__main__':
                 )
     
     right_player_model_target = DQN(
-                K = 5,
+                K = 7,
                 conv_layer_sizes=conv_layer_sizes,
                 hidden_layer_sizes=hidden_layer_sizes,
                 scope="right_player_model_target",
@@ -203,10 +212,10 @@ if __name__ == '__main__':
         left_player_model_target.set_session(sess)
         right_player_model.set_session(sess)
         right_player_model_target.set_session(sess)
-        
 
   
         sess.run(tf.global_variables_initializer())
+
         print("Initializing experience replay buffer...")
         obs = env.reset()
         
@@ -258,8 +267,9 @@ if __name__ == '__main__':
                     epsilon_change,
                     epsilon_min,
                     video_path,
-                    record)
+                    False)
             
+           
             for ii in range(2):
                 episode_rewards[ii,i] = episode_reward[ii]/200.0
             

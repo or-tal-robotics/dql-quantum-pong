@@ -4,7 +4,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from datetime import datetime
 import sys
-from imagetranformer import ImageTransformer
+from imagetranformer import transform
 from rl_common import ReplayMemory, update_state, learn
 from dqn_model import DQN
 from gym import wrappers
@@ -32,13 +32,11 @@ def save_weights_stat(W_left, W_right):
     df.to_csv("weights_stats_right.csv",sep="\t", mode='a', header=False)
 
 def play_ones(env,
-              sess,
               lr,
               total_t,
               experience_replay_buffer,
               model,
               target_model,
-              image_transformer,
               gamma,
               batch_size,
               epsilon,
@@ -49,8 +47,8 @@ def play_ones(env,
     
     t0 = datetime.now()
     obs = env.reset()
-    obs_small_right = image_transformer.transform(obs, sess)
-    obs_small_left = image_transformer.transform(obs, sess)
+    obs_small_right = transform(obs)
+    obs_small_left = transform(obs)
     state_right = np.stack([obs_small_right] * n_history, axis = 2)
     state_left = np.stack([obs_small_left] * n_history, axis = 2)
     
@@ -82,11 +80,11 @@ def play_ones(env,
 #            action_right = model[0].sample_action(state_right, 0.0)
 
         obs, reward, done, hit = env.step([action_right,action_left])
-        print(model[1].get_weights())
-        if hit != 0:
-            save_weights_stat(model[1].get_weights(), model[0].get_weights())
-        obs_small_right = image_transformer.transform(obs, sess)
-        obs_small_left = image_transformer.transform(obs, sess)
+        #print(model[0].get_weights()[-2])
+        # if hit != 0:
+        #     save_weights_stat(model[1].get_weights(), model[0].get_weights())
+        obs_small_right = transform(obs)
+        obs_small_left = transform(obs)
         next_state_left = update_state(state_left, obs_small_left)
         next_state_right = update_state(state_right, obs_small_right)
         t0_2 = datetime.now()
@@ -102,9 +100,9 @@ def play_ones(env,
 #            experience_replay_buffer[1].add_experience(action_left, obs_small_right, reward[1], done)
 #            learn(model[1], target_model[1], experience_replay_buffer[1], gamma, batch_size, lr)
         experience_replay_buffer[0].add_experience(action_right, obs_small_right, reward[0], done)
-        learn(model[0], target_model[0], experience_replay_buffer[0], gamma, batch_size, lr)  
+        learn(model[0], target_model[0], experience_replay_buffer[0], gamma, batch_size)  
         experience_replay_buffer[1].add_experience(action_left, obs_small_right, reward[1], done)
-        learn(model[1], target_model[1], experience_replay_buffer[1], gamma, batch_size, lr)
+        learn(model[1], target_model[1], experience_replay_buffer[1], gamma, batch_size)
         
         dt = datetime.now() - t0_2
         
@@ -172,134 +170,111 @@ if __name__ == '__main__':
 
     left_player_model = DQN(
                 K = 5,
-                conv_layer_sizes=conv_layer_sizes,
-                hidden_layer_sizes=hidden_layer_sizes,
-                scope="left_player_model",
                 image_size=IM_SIZE
                 )
     
     left_player_model_target = DQN(
                 K = 5,
-                conv_layer_sizes=conv_layer_sizes,
-                hidden_layer_sizes=hidden_layer_sizes,
-                scope="left_player_model_target",
                 image_size=IM_SIZE
                 )
     
     right_player_model = DQN(
                 K = 7,
-                conv_layer_sizes=conv_layer_sizes,
-                hidden_layer_sizes=hidden_layer_sizes,
-                scope="right_player_model",
                 image_size=IM_SIZE
                 )
     
     right_player_model_target = DQN(
                 K = 7,
-                conv_layer_sizes=conv_layer_sizes,
-                hidden_layer_sizes=hidden_layer_sizes,
-                scope="right_player_model_target",
                 image_size=IM_SIZE
                 )
     
     
     
-    image_transformer = ImageTransformer(IM_SIZE)
+    # print(left_player_model.get_weights()[-2].shape)
+
+
+    print("Initializing experience replay buffer...")
+    obs = env.reset()
     
-    with tf.Session() as sess:
+    for i in range(MIN_EXPERIENCE):
+        action = [np.random.choice(K),np.random.choice(K)]
+        obs, reward, done, _ = env.step(action)
+        obs_small_right = transform(obs)
+        obs_small_left = transform(obs)
+        experience_replay_buffer[0].add_experience(action[0], obs_small_right, reward[0], done)
+        experience_replay_buffer[1].add_experience(action[1], obs_small_left, reward[1], done)
         
-        left_player_model.set_session(sess)
-        left_player_model_target.set_session(sess)
-        right_player_model.set_session(sess)
-        right_player_model_target.set_session(sess)
-
-  
-        sess.run(tf.global_variables_initializer())
-
-        print("Initializing experience replay buffer...")
-        obs = env.reset()
-        
-        for i in range(MIN_EXPERIENCE):
-            action = [np.random.choice(K),np.random.choice(K)]
-            obs, reward, done, _ = env.step(action)
-            obs_small_right = image_transformer.transform(obs, sess)
-            obs_small_left = image_transformer.transform(obs, sess)
-            experience_replay_buffer[0].add_experience(action[0], obs_small_right, reward[0], done)
-            experience_replay_buffer[1].add_experience(action[1], obs_small_left, reward[1], done)
+        if done:
+            obs = env.reset()
             
-            if done:
-                obs = env.reset()
-                
-        t0 = datetime.now()
-        record = True
-        episode_reward = [0,1]
-        skip_intervel = 5
-        lr = 1e-6
-        for i in range(num_episodes):
-            video_path = 'video/Episode_'+str(i)+'.avi'
-            if i%100 == 0:
-                record = True
+    t0 = datetime.now()
+    record = True
+    episode_reward = [0,1]
+    skip_intervel = 5
+    lr = 1e-6
+    for i in range(num_episodes):
+        video_path = 'video/Episode_'+str(i)+'.avi'
+        if i%100 == 0:
+            record = True
+        else:
+            record = False
+
+        
+        
+            
+        if (i+1) % 50 == 0 and i > 10:
+            if lr < 5e-8:
+                lr = 5e-8
             else:
-                record = False
+                lr *= 0.93
+            print("changing learning rate to: "+str(lr))
+            
+        total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(
+                env,
+                lr,
+                total_t,
+                experience_replay_buffer,
+                [right_player_model, left_player_model],
+                [right_player_model_target, left_player_model_target],
+                gamma,
+                batch_sz,
+                epsilon,
+                epsilon_change,
+                epsilon_min,
+                video_path,
+                record)
+        
+       
+        for ii in range(2):
+            episode_rewards[ii,i] = episode_reward[ii]/200.0
+        
+        episode_lens[i] = num_steps_in_episode
+        last_100_avg1 = episode_rewards[0,max(0,i-100):i+1].mean()
+        last_100_avg2 = episode_rewards[1,max(0,i-100):i+1].mean()
+        print("Episode:", i ,
+              "training:", train_idxs, 
+              "Duration:", duration,
+              "Num steps:", num_steps_in_episode,
+              "Reward 1:", episode_reward[0],
+              "Reward 2:", episode_reward[1],
+              "Training time per step:", "%.3f" %time_per_step,
+              "Avg Reward 1:", "%.3f"%last_100_avg1,
+              "Avg Reward 2:", "%.3f"%last_100_avg2,
+              "Epsilon:", "%.3f"%epsilon)
+        sys.stdout.flush()
+    print("Total duration:", datetime.now()-t0)
+    
+    
+    y1 = smooth(episode_rewards[0,:i])
+    
+    y2 = smooth(episode_rewards[1,:i])
+    plt.plot(y1)
+    plt.plot(y2)
 
-            
-            
-                
-            if (i+1) % 50 == 0 and i > 10:
-                if lr < 5e-8:
-                    lr = 5e-8
-                else:
-                    lr *= 0.93
-                print("changing learning rate to: "+str(lr))
-                
-            total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(
-                    env,
-                    sess,
-                    lr,
-                    total_t,
-                    experience_replay_buffer,
-                    [right_player_model, left_player_model],
-                    [right_player_model_target, left_player_model_target],
-                    image_transformer,
-                    gamma,
-                    batch_sz,
-                    epsilon,
-                    epsilon_change,
-                    epsilon_min,
-                    video_path,
-                    False)
-            
-           
-            for ii in range(2):
-                episode_rewards[ii,i] = episode_reward[ii]/200.0
-            
-            episode_lens[i] = num_steps_in_episode
-            last_100_avg1 = episode_rewards[0,max(0,i-100):i+1].mean()
-            last_100_avg2 = episode_rewards[1,max(0,i-100):i+1].mean()
-            print("Episode:", i ,
-                  "training:", train_idxs, 
-                  "Duration:", duration,
-                  "Num steps:", num_steps_in_episode,
-                  "Reward 1:", episode_reward[0],
-                  "Reward 2:", episode_reward[1],
-                  "Training time per step:", "%.3f" %time_per_step,
-                  "Avg Reward 1:", "%.3f"%last_100_avg1,
-                  "Avg Reward 2:", "%.3f"%last_100_avg2,
-                  "Epsilon:", "%.3f"%epsilon)
-            sys.stdout.flush()
-        print("Total duration:", datetime.now()-t0)
-        
-        
-        y1 = smooth(episode_rewards[0,:i])
-        
-        y2 = smooth(episode_rewards[1,:i])
-        plt.plot(y1)
-        plt.plot(y2)
-
-        env.close()
-        
-         
-        
+    env.close()
+    
+     
+    
         
        
         

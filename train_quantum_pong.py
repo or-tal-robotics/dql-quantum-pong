@@ -72,17 +72,10 @@ def play_ones(env,
         action_left = model[1].sample_action(state_left, epsilon)
         action_right = model[0].sample_action(state_right, epsilon)
         
-#        if total_t % 2 == 0:
-#            action_left = model[1].sample_action(state_left, 0.0)
-#            action_right = model[0].sample_action(state_right, epsilon)
-#        if (total_t + 1) % 2 == 0:
-#            action_left = model[1].sample_action(state_left, epsilon)
-#            action_right = model[0].sample_action(state_right, 0.0)
+
 
         obs, reward, done, hit = env.step([action_right,action_left])
-        #print(model[0].get_weights()[-2])
-        # if hit != 0:
-        #     save_weights_stat(model[1].get_weights(), model[0].get_weights())
+
         obs_small_right = transform(obs)
         obs_small_left = transform(obs)
         next_state_left = update_state(state_left, obs_small_left)
@@ -92,13 +85,7 @@ def play_ones(env,
         for ii in range(2):
             if reward[ii]>0:
                 episode_reward[ii] += reward[ii]
-#        if total_t % 2 == 0:
-#            experience_replay_buffer[0].add_experience(action_right, obs_small_right, reward[0], done)
-#            learn(model[0], target_model[0], experience_replay_buffer[0], gamma, batch_size, lr)
-#            
-#        if (total_t + 1) % 2 == 0:
-#            experience_replay_buffer[1].add_experience(action_left, obs_small_right, reward[1], done)
-#            learn(model[1], target_model[1], experience_replay_buffer[1], gamma, batch_size, lr)
+
         experience_replay_buffer[0].add_experience(action_right, obs_small_right, reward[0], done)
         learn(model[0], target_model[0], experience_replay_buffer[0], gamma, batch_size)  
         experience_replay_buffer[1].add_experience(action_left, obs_small_right, reward[1], done)
@@ -222,12 +209,7 @@ if __name__ == '__main__':
         
         
             
-        if (i+1) % 50 == 0 and i > 10:
-            if lr < 5e-8:
-                lr = 5e-8
-            else:
-                lr *= 0.93
-            print("changing learning rate to: "+str(lr))
+      
             
         total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(
                 env,

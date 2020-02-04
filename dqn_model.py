@@ -26,9 +26,14 @@ class DQN():
         self.model = Model(inputs=self.X, outputs=self.predict_op)
         self.loss_object  = Huber()
         
+        initial_learning_rate = 1e-4
+        lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+            initial_learning_rate,
+            decay_steps=100000,
+            decay_rate=0.96,
+            staircase=True)
         
-        
-        self.train_op = tf.keras.optimizers.Adam(1e-5)
+        self.train_op = tf.keras.optimizers.Adam(lr_schedule)
             
     def copy_from(self, other):
         self.model.set_weights(other.model.get_weights()) 

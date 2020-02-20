@@ -18,7 +18,6 @@ TARGET_UPDATE_PERIOD = 50000
 IM_SIZE = 84
 K = 5
 n_history = 4
-MAX_STEPS_PER_EPSIODE = 50000
 
 class Statistics():
     q = 0
@@ -32,7 +31,6 @@ def save_weights_stat(W_left, W_right):
     df.to_csv("weights_stats_right.csv",sep="\t", mode='a', header=False)
 
 def play_ones(env,
-              lr,
               total_t,
               experience_replay_buffer,
               model,
@@ -56,9 +54,7 @@ def play_ones(env,
     num_steps_in_episode = 0
     episode_reward = [0,0]
     quantum_button = [0,0]
-    quantum_button_dual = 0
-    W_left = []
-    W_right = []        
+    quantum_button_dual = 0      
 
     done = False
     if record == True:
@@ -139,9 +135,9 @@ if __name__ == '__main__':
     conv_layer_sizes = [(32,8,4), (64,4,2), (64,3,1)]
     plot_flag = False
     hidden_layer_sizes = [512]
-    gamma = 0.99
-    batch_sz = 32
-    num_episodes = 3000
+    gamma = 0.999
+    batch_sz = 64
+    num_episodes = 5000
     total_t = 0
     experience_replay_buffer = [ReplayMemory(),ReplayMemory()]
     episode_rewards = np.zeros((2,num_episodes))
@@ -149,7 +145,7 @@ if __name__ == '__main__':
     train_idxs = [0,1]
     epsilon = 1.0
     epsilon_min = 0.1
-    epsilon_change = (epsilon - epsilon_min) / 200000
+    epsilon_change = (epsilon - epsilon_min) / 1000000
     quantum_buttons = np.zeros((2,num_episodes))
     quantum_button_duals = np.zeros(num_episodes)
     env = gym.make('gym_quantum_pong:Quantum_Pong-v0', mode = "quantum")
@@ -178,6 +174,7 @@ if __name__ == '__main__':
     
     
     # print(left_player_model.get_weights()[-2].shape)
+    
 
 
     print("Initializing experience replay buffer...")
@@ -197,8 +194,6 @@ if __name__ == '__main__':
     t0 = datetime.now()
     record = True
     episode_reward = [0,1]
-    skip_intervel = 5
-    lr = 1e-6
     for i in range(num_episodes):
         video_path = 'video/Episode_'+str(i)+'.avi'
         if i%100 == 0:
@@ -213,7 +208,6 @@ if __name__ == '__main__':
             
         total_t, episode_reward, duration, num_steps_in_episode, time_per_step, epsilon, quantum_button, quantum_button_dual = play_ones(
                 env,
-                lr,
                 total_t,
                 experience_replay_buffer,
                 [right_player_model, left_player_model],

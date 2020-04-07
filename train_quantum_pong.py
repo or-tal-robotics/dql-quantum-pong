@@ -45,8 +45,8 @@ def play_ones(env,
     
     t0 = datetime.now()
     obs = env.reset()
-    obs_small_right = transform(obs)
-    obs_small_left = transform(obs)
+    obs_small_right = transform(obs[0])
+    obs_small_left = transform(obs[1])
     state_right = np.stack([obs_small_right] * n_history, axis = 2)
     state_left = np.stack([obs_small_left] * n_history, axis = 2)
     
@@ -55,7 +55,10 @@ def play_ones(env,
     episode_reward = [0,0]
     quantum_button = [0,0]
     quantum_button_dual = 0      
-
+    # if np.random.binomial(1,epsilon)==1:
+    #     use_force = True
+    # else:
+    #     use_force = False
     done = False
     if record == True:
         out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), 20.0, (640,480))
@@ -67,13 +70,25 @@ def play_ones(env,
             print("model is been copied!")
         action_left = model[1].sample_action(state_left, epsilon)
         action_right = model[0].sample_action(state_right, epsilon)
-        
+        # if use_force == True:
+        #     if env.QP.right_player.theta_ent < np.pi/4:
+        #         action_right = 4
+        #     elif env.QP.right_player.theta_ent > np.pi/4:
+        #         action_right = 5
+        #     elif env.QP.right_player.theta_mes1 > np.pi/2:
+        #         action_right = 1
+        #     elif env.QP.right_player.theta_mes1 < np.pi/2:
+        #         action_right = 0
+        #     elif env.QP.right_player.theta_mes2 > 0:
+        #         action_right = 3
+        #     elif env.QP.right_player.theta_mes2 < 0:
+        #         action_right = 2
 
 
         obs, reward, done, hit = env.step([action_right,action_left])
 
-        obs_small_right = transform(obs)
-        obs_small_left = transform(obs)
+        obs_small_right = transform(obs[0])
+        obs_small_left = transform(obs[1])
         next_state_left = update_state(state_left, obs_small_left)
         next_state_right = update_state(state_right, obs_small_right)
         t0_2 = datetime.now()
@@ -97,7 +112,7 @@ def play_ones(env,
         total_t += 1
         epsilon = max(epsilon - epsilon_change, epsilon_min)
         if record == True:
-            frame = cv2.cvtColor(obs_small_left, cv2.COLOR_GRAY2BGR)
+            frame = cv2.cvtColor(obs_small_right, cv2.COLOR_GRAY2BGR)
             frame = cv2.resize(frame,(640,480))
             org = (50, 20) 
             font = cv2.FONT_HERSHEY_SIMPLEX
@@ -132,11 +147,9 @@ def smooth(x):
         
 
 if __name__ == '__main__':
-    conv_layer_sizes = [(32,8,4), (64,4,2), (64,3,1)]
     plot_flag = False
-    hidden_layer_sizes = [512]
-    gamma = 0.999
-    batch_sz = 64
+    gamma = 0.99
+    batch_sz = 32
     num_episodes = 5000
     total_t = 0
     experience_replay_buffer = [ReplayMemory(),ReplayMemory()]
@@ -183,8 +196,8 @@ if __name__ == '__main__':
     for i in range(MIN_EXPERIENCE):
         action = [np.random.choice(K),np.random.choice(K)]
         obs, reward, done, _ = env.step(action)
-        obs_small_right = transform(obs)
-        obs_small_left = transform(obs)
+        obs_small_right = transform(obs[0])
+        obs_small_left = transform(obs[1])
         experience_replay_buffer[0].add_experience(action[0], obs_small_right, reward[0], done)
         experience_replay_buffer[1].add_experience(action[1], obs_small_left, reward[1], done)
         

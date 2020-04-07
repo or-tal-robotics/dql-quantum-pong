@@ -6,21 +6,24 @@ from tensorflow.keras.layers import Dense, Flatten, Conv2D, Input, BatchNormaliz
 from tensorflow.keras import Model
 from tensorflow.keras.losses import Huber
 import numpy as np
+from tensorflow.keras import regularizers
+
 
 class DQN():
     def __init__(self, K, image_size):
+        initializer = tf.random_normal_initializer(0., 0.02)
         self.K = K
         self.X = Input(shape=[image_size,image_size,4])
         Z = self.X / 255.0
-        Z = Conv2D(32, 8,input_shape=(image_size, image_size, 4), activation='relu')(Z)
+        Z = Conv2D(32, 8,input_shape=(image_size, image_size, 4), activation='relu',  kernel_initializer=initializer, kernel_regularizer=regularizers.l2(0.001))(Z)
         Z = MaxPooling2D(pool_size=(4, 4))(Z)
         Z = BatchNormalization()(Z)
-        Z = Conv2D(64, 4, activation='relu')(Z)
+        Z = Conv2D(64, 4, activation='relu',  kernel_initializer=initializer, kernel_regularizer=regularizers.l2(0.001))(Z)
         Z = MaxPooling2D(pool_size=(2, 2))(Z)
         Z = BatchNormalization()(Z)
-        Z = Conv2D(64, 3, activation='relu')(Z)
+        Z = Conv2D(64, 3, activation='relu',  kernel_initializer=initializer, kernel_regularizer=regularizers.l2(0.001))(Z)
         Z = Flatten()(Z)
-        Z = Dense(512, activation='relu')(Z)
+        Z = Dense(512, activation='relu',  kernel_initializer=initializer, kernel_regularizer=regularizers.l2(0.001))(Z)
         self.predict_op = Dense(self.K)(Z)
         
         self.model = Model(inputs=self.X, outputs=self.predict_op)
